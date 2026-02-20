@@ -2,10 +2,10 @@
 const CACHE_NAME = 'my-pwa-cache-v1';
 const urlsToCache = [
   '/',
-  '/index.html',
-  '/styles/main.css',
-  '/scripts/app.js',
-  '/images/icon-192x192.png'
+  '/PWA/index.html',
+  '/PWA/styles/main.css',
+  '/PWA/scripts/app.js',
+  '/PWA/images/icon-192x192.png'
 ];
 
 // Install event: cache assets
