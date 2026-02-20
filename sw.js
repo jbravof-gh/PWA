@@ -5,7 +5,7 @@ const urlsToCache = [
   '/PWA/index.html',
   '/PWA/styles/style.css',
   '/PWA/scripts/app.js',
-  '/PWA/images/key192.png'
+  '/PWA/Images/key192.png'
 ];
 
 // Install event: cache assets
