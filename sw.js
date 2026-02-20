@@ -1,9 +1,8 @@
 // sw.js
 const CACHE_NAME = 'my-pwa-cache-v1';
 const urlsToCache = [
-  '/',
+  '/PWA',
   '/PWA/index.html',
-  '/PWA/styles/style.css',
   '/PWA/scripts/app.js',
   '/PWA/Images/key192.png'
 ];
