@@ -63,6 +63,7 @@
                     { "component": "NAV", "element": "Container", "style": "width: 240px; background: #f8f9fa; border-right: 1px solid #dee2e6;" },
                     { "component": "NAV", "element": "Link", "style": "color: #495057; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;" },
                     { "component": "HEADER", "element": "Main Bar", "style": "height: 60px; background: #ffffff; border-bottom: 1px solid #dee2e6;" },
+               { "component": "HEADER", "element": "Button", "style": " background: transparent; " },
                     { "component": "WINDOW", "element": "Header", "style": "background: #f8f9fa; padding: 10px 14px; cursor: move;" },
                     { "component": "WINDOW", "element": "Body", "style": "padding: 10px; background: white; overflow: auto;" }
                 ]
@@ -188,7 +189,7 @@ header {
   /* Use the environment variable for setting the width with a fallback. */
   width: env(titlebar-area-width, 100%);
   /* Use the environment variable for setting the height with a fallback. */
-  height: env(titlebar-area-height, 33px);
+  height: env(titlebar-area-height, 34px);
 }
     </style>
 </head>
@@ -483,4 +484,5 @@ header {
         $(document).ready(() => app.init());
     </script>
 </body>
+
 </html>
