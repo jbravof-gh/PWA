@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="black">
+    <title>Coding Partner - App Studio MDI</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- jQuery UI CSS -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    
+    <!-- Librerías -->
+    <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <link rel="manifest" href="./manifest.json">
+    <script src="./scripts/app.js"></script>
+    <!-- PLANTILLAS DE SECCIONES (TEMPLATES) -->
+    <template id="tpl-arrays">
+        <script id="schema-data" type="application/json">
+            {
+                "usuarios": [
+                    { "id": 1, "nombre": "Admin", "rol": "Superuser" },
+                    { "id": 2, "nombre": "Editor", "rol": "Staff" }
+                ],
+                "productos": [
+                    { "id": 101, "item": "Laptop Pro", "stock": 15 },
+                    { "id": 102, "item": "Monitor 4K", "stock": 8 }
+                ],
+                "nav_elements": [
+                    { "section": "Herramientas", "label": "Dashboard", "icon": "🏠", "view": "dashboard" },
+                    { "section": "Herramientas", "label": "Tareas", "icon": "📋", "view": "tasks" },
+                    { "section": "Sistema", "label": "Database", "icon": "🗄️", "view": "database" },
+                    { "section": "Sistema", "label": "Configuración", "icon": "⚙️", "view": "config" }
+                ],
+                "header_elements": [
+                    { "label": "Menú", "icon": "☰", "action": "toggle-nav", "position": "left" },
+                    { "label": "Pantalla Completa", "icon": "⛶", "action": "fullscreen", "position": "end" },
+                    { "label": "Información", "icon": "ℹ", "action": "toggle-aside", "position": "end" }
+                ],
+                "window_buttons": [
+                    { "label": "Minimalista", "icon": "🔳", "action": "toggle-header", "class": "win-btn-toggle" },
+                    { "label": "Minimizar", "icon": "—", "action": "minimize", "class": "" },
+                    { "label": "Maximizar", "icon": "🗖", "action": "maximize", "class": "" },
+                    { "label": "Cerrar", "icon": "&times;", "action": "close", "class": "win-btn-close" }
+                ],
+                "actions_registry": [
+                    { "component": "NAV", "action": "open-window", "code": "app.createWindow(viewId, title)", "params": "viewId, title", "desc": "Crea una ventana MDI vinculada al menú lateral" },
+                    { "component": "HEADER", "action": "toggle-nav", "code": "ui.togglePanel('nav')", "params": "id: 'nav'", "desc": "Colapsa/Expande la barra de navegación izquierda" },
+                    { "component": "HEADER", "action": "toggle-aside", "code": "ui.togglePanel('aside')", "params": "id: 'aside'", "desc": "Muestra/Oculta el gestor de ventanas derecho" },
+                    { "component": "HEADER", "action": "fullscreen", "code": "ui.toggleFullScreen()", "params": "none", "desc": "Alterna el modo de pantalla completa del navegador" },
+                    { "component": "WINDOW", "action": "close", "code": "app.winAction('close', winId)", "params": "winId", "desc": "Destruye la instancia de la ventana" },
+                    { "component": "WINDOW", "action": "maximize", "code": "app.winAction('maximize', winId)", "params": "winId", "desc": "Ajusta la ventana al tamaño del contenedor" },
+                    { "component": "WINDOW", "action": "minimize", "code": "app.winAction('minimize', winId)", "params": "winId", "desc": "Alterna el estado minimizado de la ventana" },
+                    { "component": "CONFIG", "action": "toggle-theme", "code": "ui.toggleTheme()", "params": "none", "desc": "Cambia entre modo claro y oscuro" },
+                    { "component": "DATABASE", "action": "reset-db", "code": "app.resetDatabaseFromTemplate()", "params": "none", "desc": "Sincroniza IndexedDB con las plantillas seleccionadas" }
+                ],
+                "ui_styles_registry": [
+                    { "component": "NAV", "element": "Container", "style": "width: 240px; background: #f8f9fa; border-right: 1px solid #dee2e6;" },
+                    { "component": "NAV", "element": "Link", "style": "color: #495057; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;" },
+                    { "component": "HEADER", "element": "Main Bar", "style": "height: 60px; background: #ffffff; border-bottom: 1px solid #dee2e6;" },
+                    { "component": "WINDOW", "element": "Header", "style": "background: #f8f9fa; padding: 10px 14px; cursor: move;" },
+                    { "component": "WINDOW", "element": "Body", "style": "padding: 10px; background: white; overflow: auto;" }
+                ]
+            }
+        </script>
+    </template>
+
+    <template id="tpl-dashboard">
+        <div class="p-3">
+            <h5>Dashboard</h5>
+            <p class="small text-muted">Resumen del sistema.</p>
+            <div class="row g-2">
+                <div class="col-6"><div class="card p-2 text-center bg-light"><h6>Tablas</h6><span id="stat-tables" class="fw-bold">0</span></div></div>
+                <div class="col-6"><div class="card p-2 text-center bg-light"><h6>Tareas</h6><span id="stat-tasks" class="fw-bold">0</span></div></div>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-tasks">
+        <div class="p-2 h-100 d-flex flex-column">
+            <h6>Gestión de Tareas</h6>
+            <div class="input-group input-group-sm mb-2">
+                <input type="text" id="taskInput" class="form-control" placeholder="Nueva tarea...">
+                <button class="btn btn-primary" onclick="app.addTask()">+</button>
+            </div>
+            <ul id="task-list-container" class="list-group list-group-flush small overflow-auto flex-grow-1"></ul>
+        </div>
+    </template>
+
+    <template id="tpl-database">
+        <div class="h-100 d-flex flex-column overflow-hidden">
+            <ul class="nav nav-tabs sticky-tabs bg-white border-bottom px-2" id="dbTabs" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active py-2 x-small" id="tpl-db-tab" data-bs-toggle="tab" data-bs-target="#tpl-db-pane" type="button">1. Configurar Plantillas</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link py-2 x-small" id="real-db-tab" data-bs-toggle="tab" data-bs-target="#real-db-pane" type="button" onclick="app.refreshDatabaseView()">2. Base de Datos (Live)</button>
+                </li>
+            </ul>
+            <div class="tab-content flex-grow-1 overflow-auto p-2" id="dbTabsContent">
+                <!-- PANEL DE SELECCION DE PLANTILLAS -->
+                <div class="tab-pane fade show active" id="tpl-db-pane">
+                    <div class="alert alert-warning py-2 x-small">
+                        <strong>Inicio:</strong> Selecciona las tablas para inicializar la base de datos IndexedDB.
+                    </div>
+                    
+                    <div class="card shadow-sm border-0 mb-3">
+                        <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold x-small">TABLAS DISPONIBLES</span>
+                                <div class="btn-group">
+                                    <button class="btn btn-xs btn-outline-secondary" onclick="app.selector.checkAll(true)">Todas</button>
+                                    <button class="btn btn-xs btn-outline-secondary" onclick="app.selector.checkAll(false)">Ninguna</button>
+                                </div>
+                            </div>
+                            <div id="template-selector-list" class="row g-2 px-1 mb-3">
+                                <!-- Checkboxes generados dinamicamente -->
+                            </div>
+                            <button class="btn btn-sm btn-primary w-100 py-1" onclick="app.resetDatabaseFromTemplate()">
+                                🚀 Cargar Tablas Seleccionadas
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="template-data-view"></div>
+                </div>
+
+                <!-- PANEL DE TABLAS REALES -->
+                <div class="tab-pane fade" id="real-db-pane">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6>Tablas Persistentes</h6>
+                        <span class="badge bg-primary x-small" id="live-table-count">0 tablas</span>
+                    </div>
+                    <div id="live-db-tables-view"></div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <style>
+        :root { --sidebar-width: 240px; --aside-width: 240px; --transition-speed: 0.3s; }
+        body { overflow: hidden; height: 100vh; display: flex; flex-direction: column; font-family: 'Segoe UI', sans-serif; background: #f0f2f5; }
+        #wrapper { display: flex; flex: 1; overflow: hidden; position: relative; }
+        #nav-panel { width: var(--sidebar-width); border-right: 1px solid #dee2e6; background: #f8f9fa; z-index: 1020; overflow-x: hidden; display: flex; flex-direction: column; }
+        #aside-panel { width: var(--aside-width); transition: margin-right var(--transition-speed); border-left: 1px solid #dee2e6; background: #f8f9fa; z-index: 1020; }
+        #aside-panel.collapsed { margin-right: calc(var(--aside-width) * -1); }
+        #main-content { flex: 1; position: relative; background: #e9ecef; overflow: hidden; }
+        .app-window { position: absolute; width: 440px; min-height: 250px; background: white; border: 1px solid #adb5bd; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; z-index: 100; }
+        .window-header { background: #f8f9fa; padding: 10px 14px; cursor: move; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #dee2e6; user-select: none; }
+        .window-body { flex: 1; overflow: auto; background: white; padding: 10px; }
+        .win-btn { border: none; background: none; font-size: 0.85rem; color: #6c757d; cursor: pointer; width: 28px; height: 28px; border-radius: 4px; transition: background 0.2s; }
+        .win-btn:hover { background-color: rgba(0,0,0,0.1); }
+        .x-small { font-size: 0.75rem; }
+        .table-mini { font-size: 0.7rem; }
+        .btn-xs { padding: 2px 5px; font-size: 0.65rem; }
+        .pointer { cursor: pointer; }
+        
+        body.dark-mode { background-color: #1a1d20; color: #e9ecef; }
+        body.dark-mode .app-window, body.dark-mode .window-body { background-color: #2c3034; color: #e9ecef; }
+        body.dark-mode #nav-panel, body.dark-mode #aside-panel, body.dark-mode #header, body.dark-mode #footer { background-color: #212529 !important; border-color: #343a40 !important; color: #dee2e6; }
+        body.dark-mode .nav-link { color: #adb5bd; }
+        body.dark-mode .bg-white { background-color: #212529 !important; }
+    </style>
+    <style>
+
+header {
+  /* Make sure the `div` stays there, even when scrolling. */
+  position: fixed;
+  padding: 10px !important;
+  /**
+   * Gradient, because why not. Endless opportunities.
+   * The gradient ends in `#36c`, which happens to be the app's
+   * `<meta name="theme-color" content="#36c">`.
+  background-image: linear-gradient(90deg, #36c, #131313, 33%, #36c);
+
+
+   */
+   background-color: #1a1d20 !important;
+  /* Use the environment variable for the left anchoring with a fallback. */
+  left: env(titlebar-area-x, 0);
+  /* Use the environment variable for the top anchoring with a fallback. */
+  top: env(titlebar-area-y, 0);
+  /* Use the environment variable for setting the width with a fallback. */
+  width: env(titlebar-area-width, 100%);
+  /* Use the environment variable for setting the height with a fallback. */
+  height: env(titlebar-area-height, 33px);
+}
+    </style>
+</head>
+<body class="light-mode">
+
+    <header id="header" class="navbar navbar-expand navbar-light bg-black border-bottom p-2">
+        <div id="header-container-left" class="d-flex gap-2"></div>
+        <span class="navbar-brand fw-bold text-primary mx-3">APP STUDIO MDI</span>
+        <div id="header-container-right" class="me-auto d-flex gap-2"></div>
+        <div id="header-container-end" class="d-flex gap-2"></div>
+    </header>
+
+    <div id="wrapper">
+        <nav id="nav-panel">
+            <div id="nav-dynamic-content" class="w-100">
+                <div class="p-3 text-center x-small text-muted">Inicializando...</div>
+            </div>
+        </nav>
+        <main id="main-content"></main>
+        <aside id="aside-panel" class="collapsed p-4">
+            <h6 class="fw-bold x-small">Gestión de Ventanas</h6><hr>
+            <div id="window-list" class="d-grid gap-2"></div>
+        </aside>
+    </div>
+
+    <footer id="footer" class="bg-white border-top d-flex align-items-center px-4 justify-content-between py-1">
+        <small class="text-muted x-small">&copy; 2024 Studio Engine</small>
+        <div id="db-status-footer" class="x-small text-primary">Cargando base de datos...</div>
+    </footer>
+
+    <script>
+        const db = new Dexie("AppStudioDB_MDI_v5");
+        db.version(1).stores({
+            settings: 'id, value',
+            tasks: '++id, title, status',
+            nav_elements: '++id, section, label, icon, view',
+            header_elements: '++id, label, icon, action, position',
+            window_buttons: '++id, label, icon, action, class',
+            actions_registry: '++id, component, action, code, params, desc',
+            ui_styles_registry: '++id, component, element, style',
+            usuarios: '++id, nombre, rol',
+            productos: '++id, item, stock'
+        });
+
+        let windowCount = 0;
+
+        const app = {
+            async init() {
+                // Tema
+                const theme = await db.settings.get('theme');
+                if (theme?.value === 'dark') ui.toggleTheme(true);
+                
+                // Comprobación de integridad de la UI básica
+                const navCount = await db.nav_elements.count();
+                const headerCount = await db.header_elements.count();
+                
+                if (navCount === 0 || headerCount === 0) {
+                    console.log("Primer inicio detectado. Cargando UI básica...");
+                    await this.loadBasicUI();
+                }
+                
+                await this.renderNav();
+                await this.renderHeader();
+                this.updateDBStatus();
+
+                // Si no hay datos de usuario/productos, abrir Database para sugerir carga
+                const userCount = await db.usuarios.count();
+                if (userCount === 0) {
+                    this.createWindow('database', 'Database Manager');
+                }
+            },
+
+            // Carga lo mínimo para que el usuario vea botones y menús
+            async loadBasicUI() {
+                const jsonData = this.selector.getJson();
+                const essentialTables = ['nav_elements', 'header_elements', 'window_buttons', 'actions_registry'];
+                for(let t of essentialTables) {
+                    if (jsonData[t]) {
+                        await db[t].clear();
+                        await db[t].bulkAdd(jsonData[t]);
+                    }
+                }
+            },
+
+            // Lógica de Selector de Plantillas
+            selector: {
+                getJson() {
+                    const schemaHtml = $('#tpl-arrays').html();
+                    const text = $('<div>').append(schemaHtml).find('#schema-data').text();
+                    return JSON.parse(text);
+                },
+                render(winId) {
+                    const jsonData = this.getJson();
+                    const container = $(`#${winId} #template-selector-list`);
+                    if (!container.length) return;
+                    
+                    container.empty();
+                    Object.keys(jsonData).forEach(table => {
+                        container.append(`
+                            <div class="col-6">
+                                <div class="form-check x-small">
+                                    <input class="form-check-input tpl-check" type="checkbox" value="${table}" id="chk-${table}-${winId}" checked>
+                                    <label class="form-check-label pointer" for="chk-${table}-${winId}">${table} (${jsonData[table].length})</label>
+                                </div>
+                            </div>
+                        `);
+                    });
+                },
+                checkAll(val) {
+                    $('.tpl-check').prop('checked', val);
+                }
+            },
+
+            async resetDatabaseFromTemplate() {
+                const selectedTables = $('.tpl-check:checked').map(function() { return $(this).val(); }).get();
+                if (!selectedTables.length) {
+                    alert("Selecciona al menos una tabla para cargar.");
+                    return;
+                }
+
+                const jsonData = this.selector.getJson();
+                
+                for(let table of selectedTables) {
+                    if (db[table]) {
+                        await db[table].clear();
+                        if (jsonData[table]) await db[table].bulkAdd(jsonData[table]);
+                    }
+                }
+
+                await this.renderNav();
+                await this.renderHeader();
+                this.refreshDatabaseView();
+                this.updateDBStatus();
+                alert("Tablas sincronizadas con IndexedDB.");
+            },
+
+            async renderNav() {
+                let navData = await db.nav_elements.toArray();
+                const container = $('#nav-dynamic-content').empty();
+                if (!navData.length) {
+                    container.append(`<div class="p-3 x-small text-muted">No hay menús.</div>`);
+                    return;
+                }
+                const sections = [...new Set(navData.map(item => item.section))];
+                sections.forEach(secName => {
+                    container.append(`<div class="px-3 pt-3 pb-1 x-small fw-bold text-muted text-uppercase" style="letter-spacing: 0.05rem">${secName}</div>`);
+                    navData.filter(i => i.section === secName).forEach(item => {
+                        const link = $(`<a class="nav-link px-3 py-2 x-small pointer border-start border-3 border-transparent" data-view="${item.view}">${item.icon} ${item.label}</a>`);
+                        link.on('click', () => app.createWindow(item.view, item.label));
+                        container.append(link);
+                    });
+                });
+            },
+
+            async renderHeader() {
+                const headerData = await db.header_elements.toArray();
+                const cLeft = $('#header-container-left').empty(), cRight = $('#header-container-right').empty(), cEnd = $('#header-container-end').empty();
+                headerData.forEach(item => {
+                    let act = item.action === 'toggle-nav' ? "ui.togglePanel('nav')" : (item.action === 'fullscreen' ? "ui.toggleFullScreen()" : "ui.togglePanel('aside')");
+                    const btn = `<button class="btn btn-sm btn-light border x-small shadow-sm px-2" onclick="${act}">${item.icon} ${item.label}</button>`;
+                    if (item.position === 'left') cLeft.append(btn); else if (item.position === 'end') cEnd.append(btn); else cRight.append(btn);
+                });
+            },
+
+            async createWindow(viewId, title) {
+                if ($(`.app-window[data-view-id="${viewId}"]`).length) return;
+                windowCount++;
+                const winId = `win-${windowCount}`;
+                const winButtons = await db.window_buttons.toArray();
+                let btnsHtml = winButtons.map(b => `<button class="win-btn" onclick="app.winAction('${b.action}', '${winId}')" title="${b.label}">${b.icon}</button>`).join('');
+
+                const winHtml = `
+                    <div id="${winId}" class="app-window" data-view-id="${viewId}" style="top:${60+(windowCount*25)}px; left:${60+(windowCount*25)}px">
+                        <div class="window-header"><span class="x-small fw-bold text-dark">${title}</span><div class="window-controls d-flex gap-1">${btnsHtml}</div></div>
+                        <div class="window-body" id="body-${winId}"></div>
+                    </div>
+                `;
+                $('#main-content').append(winHtml);
+                const tpl = document.getElementById(`tpl-${viewId}`);
+                if (tpl) $(`#body-${winId}`).append(tpl.content.cloneNode(true));
+                
+                $(`#${winId}`).draggable({ handle: ".window-header", containment: "parent", stack: ".app-window" }).resizable({ minWidth: 300, minHeight: 200 });
+
+                if (viewId === 'database') {
+                    this.selector.render(winId);
+                    this.renderTemplateData(winId);
+                }
+                if (viewId === 'dashboard') this.updateStats(winId);
+                if (viewId === 'tasks') this.refreshTasks(winId);
+                this.updateWindowList();
+            },
+
+            winAction(action, winId) {
+                if (action === 'close') { 
+                    $(`#${winId}`).remove(); 
+                    this.updateWindowList(); 
+                }
+                else if (action === 'maximize') {
+                    const win = $(`#${winId}`);
+                    if(win.hasClass('maximized')) win.removeClass('maximized').css({width:440, height:350});
+                    else win.addClass('maximized').css({top:0, left:0, width:'100%', height:'100%'});
+                }
+                else if (action === 'minimize') $(`#${winId}`).toggleClass('minimized');
+            },
+
+            async updateStats(winId) {
+                const tables = db.tables.length;
+                const tasks = await db.tasks.count();
+                $(`#${winId} #stat-tables`).text(tables);
+                $(`#${winId} #stat-tasks`).text(tasks);
+            },
+
+            renderTemplateData(winId) {
+                const container = $(`#${winId} #template-data-view`);
+                if (!container.length) return;
+                const jsonData = this.selector.getJson();
+                let html = `<hr><p class="x-small fw-bold text-muted mb-2">VISTA PREVIA DE PLANTILLA</p>`;
+                Object.keys(jsonData).forEach(t => {
+                    html += `<details class="mb-1 border rounded"><summary class="x-small pointer p-1 bg-light">${t} (${jsonData[t].length})</summary>`;
+                    html += `<div class="p-1"><table class="table table-mini mb-0"><tbody>`;
+                    jsonData[t].slice(0,2).forEach(r => html += `<tr>${Object.values(r).map(v => `<td>${v}</td>`).join('')}</tr>`);
+                    html += `</tbody></table></div></details>`;
+                });
+                container.html(html);
+            },
+
+            async refreshDatabaseView() {
+                const container = $('#live-db-tables-view').empty();
+                if(!container.length) return;
+                const tables = db.tables.map(t => t.name);
+                $('#live-table-count').text(`${tables.length} tablas activas`);
+                for (const table of tables) {
+                    const data = await db[table].toArray();
+                    if (!data.length) continue;
+                    let html = `<div class="mb-3 card p-2 border-0 shadow-sm"><strong class="x-small text-primary mb-1">${table.toUpperCase()}</strong><table class="table table-sm table-mini mb-0"><tbody>`;
+                    data.slice(0,5).forEach(row => {
+                        html += `<tr>${Object.values(row).slice(0,3).map(v => `<td>${v}</td>`).join('')}<td><button class="btn btn-xs text-danger" onclick="app.deleteRow('${table}', ${row.id})">×</button></td></tr>`;
+                    });
+                    container.append(html + `</tbody></table></div>`);
+                }
+            },
+
+            async deleteRow(table, id) { 
+                await db[table].delete(id); 
+                this.refreshDatabaseView(); 
+                this.updateDBStatus(); 
+                if(['nav_elements', 'header_elements'].includes(table)) {
+                    this.renderNav(); 
+                    this.renderHeader();
+                }
+            },
+
+            async refreshTasks(winId) {
+                const list = $(`#${winId} #task-list-container`).empty();
+                const tasks = await db.tasks.toArray();
+                tasks.forEach(t => list.append(`<li class="list-group-item d-flex justify-content-between align-items-center py-1 x-small">${t.title} <button class="btn btn-xs btn-outline-danger border-0" onclick="app.deleteTask(${t.id}, '${winId}')">×</button></li>`));
+            },
+
+            async addTask() {
+                const win = $('.app-window:has(#taskInput)');
+                const input = win.find('#taskInput');
+                const val = input.val(); if(!val) return;
+                await db.tasks.add({ title: val, status: 'pending' }); 
+                input.val('');
+                this.refreshTasks(win.attr('id')); 
+                this.updateDBStatus();
+            },
+
+            async deleteTask(id, winId) { await db.tasks.delete(id); this.refreshTasks(winId); this.updateDBStatus(); },
+
+            updateDBStatus() { db.tasks.count().then(c => $('#db-status-footer').text(`Base de datos: ${c} registros en Tareas`)); },
+            
+            updateWindowList() {
+                const list = $('#window-list').empty();
+                $('.app-window').each(function() { 
+                    const title = $(this).find('.window-header span').text();
+                    list.append(`<button class="btn btn-sm btn-white border text-start x-small overflow-hidden" onclick="$('#${$(this).attr('id')}').trigger('mousedown')">${title}</button>`); 
+                });
+            }
+        };
+
+        const ui = {
+            togglePanel(id) { $(`#${id}-panel`).toggleClass('collapsed'); },
+            toggleTheme(init = false) {
+                const body = $('body');
+                if (init) { body.addClass('dark-mode'); $('#themeSwitch').prop('checked', true); }
+                else { body.toggleClass('dark-mode'); db.settings.put({ id: 'theme', value: body.hasClass('dark-mode') ? 'dark' : 'light' }); }
+            },
+            toggleFullScreen() { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
+        };
+
+        $(document).ready(() => app.init());
+    </script>
+</body>
+</html>
