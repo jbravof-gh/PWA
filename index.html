@@ -153,6 +153,9 @@
              flex-direction:row;
              gap:10px;
          } 
+        #nav-panel.collapsed  #nav-dynamic-content > div{
+            display:none;
+        }
         #nav-panel.collapsed article{display:none !important}
         #aside-panel { width: var(--aside-width); transition: margin-right var(--transition-speed); border-left: 1px solid #dee2e6; background: #f8f9fa; z-index: 1020; }
         #aside-panel.collapsed { margin-right: calc(var(--aside-width) * -1); }
