@@ -148,6 +148,7 @@
         body { overflow: hidden; height: 100vh; display: flex; flex-direction: column; font-family: 'Segoe UI', sans-serif; background: #f0f2f5; }
         #wrapper { display: flex; flex: 1; overflow: hidden; position: relative; }
         #nav-panel { width: var(--sidebar-width); border-right: 1px solid #dee2e6; background: #f8f9fa; z-index: 1020; overflow-x: hidden; display: flex; flex-direction: column; }
+         #nav-panel.collapsed{display:none}
         #aside-panel { width: var(--aside-width); transition: margin-right var(--transition-speed); border-left: 1px solid #dee2e6; background: #f8f9fa; z-index: 1020; }
         #aside-panel.collapsed { margin-right: calc(var(--aside-width) * -1); }
         #main-content { flex: 1; position: relative; background: #e9ecef; overflow: hidden; }
