@@ -147,7 +147,7 @@
         :root { --sidebar-width: 240px; --aside-width: 240px; --transition-speed: 0.3s; }
         body { overflow: hidden; height: 100vh; display: flex; flex-direction: column; font-family: 'Segoe UI', sans-serif; background: #f0f2f5; }
         #wrapper { display: flex; flex: 1; overflow: hidden; position: relative; }
-        #nav-panel { width: var(--sidebar-width); border-right: 1px solid #dee2e6; background: #f8f9fa; z-index: 1020; overflow-x: hidden; display: flex; flex-direction: column; }
+        #nav-panel { width: auto; border-right: 1px solid #dee2e6; background: #f8f9fa; z-index: 1020; overflow-x: hidden; display: flex; flex-direction: column; }
          #nav-panel a{
              display:flex;
              flex-direction:row;
@@ -155,6 +155,9 @@
          } 
         #nav-panel.collapsed  #nav-dynamic-content > div{
             display:none;
+        }
+        #nav-panel article{
+            width:200px;
         }
         #nav-panel.collapsed article{display:none !important}
         #aside-panel { width: var(--aside-width); transition: margin-right var(--transition-speed); border-left: 1px solid #dee2e6; background: #f8f9fa; z-index: 1020; }
