@@ -338,7 +338,7 @@ header {
                 sections.forEach(secName => {
                     container.append(`<div class="px-3 pt-3 pb-1 x-small fw-bold text-muted text-uppercase" style="letter-spacing: 0.05rem">${secName}</div>`);
                     navData.filter(i => i.section === secName).forEach(item => {
-                        const link = $(`<a class="nav-link px-3 py-2 x-small pointer border-start border-3 border-transparent" data-view="${item.view}">${item.icon} ${item.label}</a>`);
+                        const link = $(`<a class="nav-link px-3 py-2 x-small pointer border-start border-3 border-transparent" data-view="${item.view}">${item.icon} <article>${item.label}</article></a>`);
                         link.on('click', () => app.createWindow(item.view, item.label));
                         container.append(link);
                     });
