@@ -150,7 +150,10 @@
         body { overflow: hidden; height: 100vh; display: flex; flex-direction: column; font-family: 'Segoe UI', sans-serif; background: #f0f2f5; }
         #wrapper { display: flex; flex: 1; overflow: hidden; position: relative; }
         #nav-panel { width: auto; border-right: 1px solid #dee2e6; background: #f8f9fa; z-index: 1020; overflow-x: hidden; display: flex; flex-direction: column; }
-         #nav-panel a{
+         #nav-panel.collapsed{
+             zoom:1.5;
+         }
+        #nav-panel a{
              display:flex;
              flex-direction:row;
              gap:10px;
