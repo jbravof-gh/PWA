@@ -604,7 +604,7 @@ function SettingsView({prefs, onChange, onRefresh}) {
         <div className="alert a-info" style={{marginBottom:12}}>
           Crea la base de datos <strong>SampleDB</strong> con tablas de usuarios, productos y pedidos con datos de ejemplo.
         </div>
-        <div style={{display:'flex',gap:8'}}>
+        <div style={{display:'flex',gap:8}}>
           <button className="btn-p" onClick={async () => {
             await createSampleDB();
             onRefresh();
