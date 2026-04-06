@@ -2,8 +2,10 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="black">
+    <meta name="viewport" content="width=device-width, initial-scale=1.2">
+    <!-- Bootstrap 5 CSS 
+    <meta name="theme-color" content="#0a0a56">
+    -->
     <title>Coding Partner - App Studio MDI</title>
     
     <!-- Bootstrap 5 CSS -->
@@ -154,7 +156,7 @@
         :root { --sidebar-width: 240px; --aside-width: 240px; --transition-speed: 0.3s; }
         body { overflow: hidden; height: 100vh; display: flex; flex-direction: column; font-family: 'Segoe UI', sans-serif; background: #f0f2f5; }
         #wrapper { display: flex; flex: 1; overflow: hidden; position: relative; }
-        #nav-panel { width: auto; border-right: 1px solid #dee2e6; background: #f8f9fa; z-index: 1020; overflow-x: hidden; display: flex; flex-direction: column; }
+        #nav-panel { width: auto; border-right: 1px solid #dee2e6; background: #1b5793; z-index: 1020; overflow-x: hidden; display: flex; flex-direction: column; }
          #nav-panel.collapsed{
              zoom:1.5;
          }
@@ -172,8 +174,8 @@
         #nav-panel.collapsed article{display:none !important}
         #aside-panel { width: var(--aside-width); transition: margin-right var(--transition-speed); border-left: 1px solid #dee2e6; background: #f8f9fa; z-index: 1020; }
         #aside-panel.collapsed { margin-right: calc(var(--aside-width) * -1); }
-        #main-content { flex: 1; position: relative; background: #e9ecef; overflow: hidden; }
-        .app-window { position: absolute; width: 440px; min-height: 250px; background: white; border: 1px solid #adb5bd; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; z-index: 100; }
+        #main-content { flex: 1; position: relative; background: #0a0a56; overflow: hidden; }
+        .app-window { position: absolute; width: 440px; height: 250px; background: white; border: 1px solid #adb5bd; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; z-index: 100; }
         .window-header { background: #f8f9fa; padding: 10px 14px; cursor: move; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #dee2e6; user-select: none; }
         .window-body { flex: 1; overflow: auto; background: white; padding: 10px; }
         .win-btn { border: none; background: none; font-size: 0.85rem; color: #6c757d; cursor: pointer; width: 28px; height: 28px; border-radius: 4px; transition: background 0.2s; }
@@ -192,38 +194,38 @@
             width:100%;
             height:100%;
         }
+        header button{
+            background-color: transparent !important;
+            color: rgb(234, 179, 14) !important;
+            border-color: transparent !important;
+            zoom: .9;
+        }
     </style>
     <style>
 
-header {
-  /* Make sure the `div` stays there, even when scrolling. */
-  position: fixed;
-  padding: 10px !important;
-  /**
-   * Gradient, because why not. Endless opportunities.
-   * The gradient ends in `#36c`, which happens to be the app's
-   * `<meta name="theme-color" content="#36c">`.
-  background-image: linear-gradient(90deg, #36c, #131313, 33%, #36c);
+        header {
+        /* Make sure the `div` stays there, even when scrolling. */
+        position: fixed;
+        padding: 10px !important;
+            background-color: #0a0a56 !important;
+        /* Use the environment variable for the left anchoring with a fallback. */
+        left: env(titlebar-area-x, 0);
+        /* Use the environment variable for the top anchoring with a fallback. */
+        top: env(titlebar-area-y, 0);
+        /* Use the environment variable for setting the width with a fallback. */
+        width: env(titlebar-area-width, 100%);
+        /* Use the environment variable for setting the height with a fallback. */
+        height: env(titlebar-area-height, 40px);
+        
+        }
 
-
-   */
-   background-color: #1a1d20 !important;
-  /* Use the environment variable for the left anchoring with a fallback. */
-  left: env(titlebar-area-x, 0);
-  /* Use the environment variable for the top anchoring with a fallback. */
-  top: env(titlebar-area-y, 0);
-  /* Use the environment variable for setting the width with a fallback. */
-  width: env(titlebar-area-width, 100%);
-  /* Use the environment variable for setting the height with a fallback. */
-  height: env(titlebar-area-height, 34px);
-}
     </style>
 </head>
 <body class="light-mode">
 
-    <header id="header" class="navbar navbar-expand navbar-light bg-black border-bottom p-2">
+    <header id="header" class="navbar navbar-expand navbar-light  border-bottom p-2">
         <div id="header-container-left" class="d-flex gap-2"></div>
-        <span class="navbar-brand fw-bold text-primary mx-3">APP STUDIO MDI</span>
+        <span class="navbar-brand fw-bold text-primary mx-2">APP STUDIO MDI</span>
         <div id="header-container-right" class="me-auto d-flex gap-2"></div>
         <div id="header-container-end" class="d-flex gap-2"></div>
     </header>
@@ -375,7 +377,7 @@ header {
                 const cLeft = $('#header-container-left').empty(), cRight = $('#header-container-right').empty(), cEnd = $('#header-container-end').empty();
                 headerData.forEach(item => {
                     let act = item.action === 'toggle-nav' ? "ui.togglePanel('nav')" : (item.action === 'fullscreen' ? "ui.toggleFullScreen()" : "ui.togglePanel('aside')");
-                    const btn = `<button class="btn btn-sm btn-light border x-small shadow-sm px-2" onclick="${act}">${item.icon} ${item.label}</button>`;
+                    const btn = `<button class="btn btn-sm btn-light  x-small shadow-sm px-2" onclick="${act}">${item.icon}</button>`;// ${item.label}</button>`;
                     if (item.position === 'left') cLeft.append(btn); else if (item.position === 'end') cEnd.append(btn); else cRight.append(btn);
                 });
             },
@@ -410,6 +412,7 @@ header {
 
             winAction(action, winId) {
                 if (action === 'close') { 
+                    windowCount--;
                     $(`#${winId}`).remove(); 
                     this.updateWindowList(); 
                 }

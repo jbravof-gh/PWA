@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Archivos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .controls {
+            padding: 25px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .file-info {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #495057;
+        }
+
+        .file-info strong {
+            color: #667eea;
+        }
+
+        .editor-container {
+            padding: 25px;
+        }
+
+        .editor {
+            width: 100%;
+            min-height: 500px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+            background: #f8f9fa;
+            transition: border-color 0.3s ease;
+        }
+
+        .editor:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+        }
+
+        .status {
+            padding: 15px 25px;
+            background: #e7f3ff;
+            border-top: 2px solid #b3d9ff;
+            font-size: 13px;
+            color: #004085;
+            text-align: center;
+        }
+
+        .status.success {
+            background: #d4edda;
+            border-top-color: #c3e6cb;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            border-top-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        .icon {
+            width: 16px;
+            height: 16px;
+            display: inline-block;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .file-info {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 Editor de Archivos</h1>
+            <p>Abre, edita y guarda archivos HTML, XML y JSON</p>
+        </div>
+
+        <div class="controls">
+            <div class="file-input-wrapper">
+                <label for="fileInput" class="btn btn-primary">
+                    📂 Abrir Archivo
+                </label>
+                <input type="file" id="fileInput" accept=".html,.xml,.json,.htm">
+            </div>
+
+            <button id="saveBtn" class="btn btn-success" disabled>
+                💾 Guardar Cambios
+            </button>
+
+            <button id="formatBtn" class="btn btn-secondary" disabled>
+                ✨ Formatear
+            </button>
+
+            <div class="file-info" id="fileInfo">
+                No hay archivo cargado
+            </div>
+        </div>
+
+        <div class="editor-container">
+            <textarea id="editor" class="editor" placeholder="Abre un archivo para comenzar a editarlo..."></textarea>
+        </div>
+
+        <div class="status" id="status">
+            Listo para abrir archivos
+        </div>
+    </div>
+
+    <script>
+        let currentFile = null;
+        let currentFileName = '';
+        let currentFileType = '';
+
+        const fileInput = document.getElementById('fileInput');
+        const editor = document.getElementById('editor');
+        const saveBtn = document.getElementById('saveBtn');
+        const formatBtn = document.getElementById('formatBtn');
+        const fileInfo = document.getElementById('fileInfo');
+        const status = document.getElementById('status');
+
+        fileInput.addEventListener('change', handleFileSelect);
+        saveBtn.addEventListener('click', saveFile);
+        formatBtn.addEventListener('click', formatContent);
+        editor.addEventListener('input', handleEditorChange);
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            currentFile = file;
+            currentFileName = file.name;
+            currentFileType = file.name.split('.').pop().toLowerCase();
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                editor.value = e.target.result;
+                saveBtn.disabled = false;
+                formatBtn.disabled = false;
+                updateFileInfo();
+                updateStatus(`Archivo "${currentFileName}" cargado correctamente`, 'success');
+            };
+            reader.onerror = function() {
+                updateStatus('Error al leer el archivo', 'error');
+            };
+            reader.readAsText(file);
+        }
+
+        function handleEditorChange() {
+            if (currentFile) {
+                updateStatus('Archivo modificado - No olvides guardar los cambios', 'default');
+            }
+        }
+
+        function formatContent() {
+            const content = editor.value.trim();
+            if (!content) {
+                updateStatus('No hay contenido para formatear', 'error');
+                return;
+            }
+
+            try {
+                let formatted;
+                
+                if (currentFileType === 'json') {
+                    const parsed = JSON.parse(content);
+                    formatted = JSON.stringify(parsed, null, 2);
+                } else if (currentFileType === 'xml' || currentFileType === 'html' || currentFileType === 'htm') {
+                    formatted = formatXML(content);
+                } else {
+                    updateStatus('Formato no soportado para formateo automático', 'error');
+                    return;
+                }
+
+                editor.value = formatted;
+                updateStatus('Contenido formateado correctamente', 'success');
+            } catch (e) {
+                updateStatus(`Error al formatear: ${e.message}`, 'error');
+            }
+        }
+
+        function formatXML(xml) {
+            const PADDING = '  ';
+            const reg = /(>)(<)(\/*)/g;
+            let formatted = '';
+            let pad = 0;
+
+            xml = xml.replace(reg, '$1\n$2$3');
+            
+            xml.split('\n').forEach(function(node) {
+                let indent = 0;
+                if (node.match(/.+<\/\w[^>]*>$/)) {
+                    indent = 0;
+                } else if (node.match(/^<\/\w/) && pad > 0) {
+                    pad -= 1;
+                } else if (node.match(/^<\w[^>]*[^\/]>.*$/)) {
+                    indent = 1;
+                } else {
+                    indent = 0;
+                }
+
+                formatted += PADDING.repeat(pad) + node + '\n';
+                pad += indent;
+            });
+
+            return formatted.trim();
+        }
+
+        function saveFile() {
+            if (!currentFile) return;
+
+            const content = editor.value;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = currentFileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            updateStatus(`Archivo "${currentFileName}" guardado correctamente`, 'success');
+        }
+
+        function updateFileInfo() {
+            const size = (currentFile.size / 1024).toFixed(2);
+            fileInfo.innerHTML = `<strong>Archivo:</strong> ${currentFileName} | <strong>Tipo:</strong> ${currentFileType.toUpperCase()} | <strong>Tamaño:</strong> ${size} KB`;
+        }
+
+        function updateStatus(message, type = 'default') {
+            status.textContent = message;
+            status.className = 'status';
+            if (type === 'success') {
+                status.classList.add('success');
+            } else if (type === 'error') {
+                status.classList.add('error');
+            }
+        }
+    </script>
+</body>
+</html>

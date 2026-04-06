@@ -1,11 +1,11 @@
 {
-  "name": "My Awesome PWA",
+  "name": "My Awesome PWA_Crhome",
   "short_name": "Awesome PWA",
   "description": "A progressive web app example.",
   "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#007bff",
+  "display": "minimal-ui",
+  "background_color": "#0a0a56",
+  "theme_color": "#0a0a56",
   "icons": [
     {
       "src": "/PWA/images/icon192.png",
