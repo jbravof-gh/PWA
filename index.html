@@ -83,7 +83,7 @@
     <template id="tpl-dashboard">
         <div class="p-3">
             <h5>Dashboard</h5>
-            <p class="small text-muted">Resumen del sistema.</p>
+            <p class="small ">Resumen del sistema.</p>
             <div class="row g-2">
                 <div class="col-6"><div class="card p-2 text-center bg-light"><h6>Tablas</h6><span id="stat-tables" class="fw-bold">0</span></div></div>
                 <div class="col-6"><div class="card p-2 text-center bg-light"><h6>Tareas</h6><span id="stat-tasks" class="fw-bold">0</span></div></div>
@@ -168,6 +168,9 @@
         #nav-panel.collapsed  #nav-dynamic-content > div{
             display:none;
         }
+        #nav-panel  #nav-dynamic-content > div{
+            color:whitesmoke !important;
+        }
         #nav-panel article{
             width:200px;
         }
@@ -175,7 +178,7 @@
         #aside-panel { width: var(--aside-width); transition: margin-right var(--transition-speed); border-left: 1px solid #dee2e6; background: #f8f9fa; z-index: 1020; }
         #aside-panel.collapsed { margin-right: calc(var(--aside-width) * -1); }
         #main-content { flex: 1; position: relative; background: #0a0a56; overflow: hidden; }
-        .app-window { position: absolute; width: 440px; height: 250px; background: white; border: 1px solid #adb5bd; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; z-index: 100; }
+        .app-window { position: absolute; width: 440px; height: 250px; background: white; border: 1px solid #adb5bd; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; z-index: unset; }
         .window-header { background: #f8f9fa; padding: 10px 14px; cursor: move; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #dee2e6; user-select: none; }
         .window-body { flex: 1; overflow: auto; background: white; padding: 10px; }
         .win-btn { border: none; background: none; font-size: 0.85rem; color: #6c757d; cursor: pointer; width: 28px; height: 28px; border-radius: 4px; transition: background 0.2s; }
@@ -187,9 +190,13 @@
         
         body.dark-mode { background-color: #1a1d20; color: #e9ecef; }
         body.dark-mode .app-window, body.dark-mode .window-body { background-color: #2c3034; color: #e9ecef; }
-        body.dark-mode #nav-panel, body.dark-mode #aside-panel, body.dark-mode #header, body.dark-mode #footer { background-color: #212529 !important; border-color: #343a40 !important; color: #dee2e6; }
+        body.dark-mode #nav-panel, body.dark-mode #aside-panel, body.dark-mode #header, body.dark-mode #footer { background-color: #212529 !important; border-color: #343a40 !important; color: #dee2e6 !important; }
         body.dark-mode .nav-link { color: #adb5bd; }
         body.dark-mode .bg-white { background-color: #212529 !important; }
+        body.dark-mode #window-list > button{
+            color: ghostwhite;
+        }
+        
         iframe{
             width:100%;
             height:100%;
@@ -225,7 +232,7 @@
 
     <header id="header" class="navbar navbar-expand navbar-light  border-bottom p-2">
         <div id="header-container-left" class="d-flex gap-2"></div>
-        <span class="navbar-brand fw-bold text-primary mx-2">APP STUDIO MDI</span>
+        <span style="font-size: 18px;" class="navbar-brand fw-bold text-primary mx-2">APP </span> <span style="font-size: 15px;" class="navbar-brand  text-success mx-0"> template</span>
         <div id="header-container-right" class="me-auto d-flex gap-2"></div>
         <div id="header-container-end" class="d-flex gap-2"></div>
     </header>
@@ -244,7 +251,7 @@
     </div>
 
     <footer id="footer" class="bg-white border-top d-flex align-items-center px-4 justify-content-between py-1">
-        <small class="text-muted x-small">&copy; 2024 Studio Engine</small>
+        <small class=" x-small">&copy; 2024 Studio Engine</small>
         <div id="db-status-footer" class="x-small text-primary">Cargando base de datos...</div>
     </footer>
 
@@ -263,7 +270,7 @@
         });
 
         let windowCount = 0;
-
+        var zindex_count=1000;
         const app = {
             async init() {
                 // Tema
@@ -286,7 +293,7 @@
                 // Si no hay datos de usuario/productos, abrir Database para sugerir carga
                 const userCount = await db.usuarios.count();
                 if (userCount === 0) {
-                    this.createWindow('database', 'Database Manager');
+                   // this.createWindow('database', 'Database Manager');
                 }
             },
 
@@ -383,14 +390,16 @@
             },
 
             async createWindow(viewId, title) {
-                if ($(`.app-window[data-view-id="${viewId}"]`).length) return;
+                alert($(`.app-window[data-view-id="${viewId}"].id`))
+                if ($(`.app-window[data-view-id="${viewId}"]`).length) {select_window(viewId); return;}
                 windowCount++;
                 const winId = `win-${windowCount}`;
+
                 const winButtons = await db.window_buttons.toArray();
                 let btnsHtml = winButtons.map(b => `<button class="win-btn" onclick="app.winAction('${b.action}', '${winId}')" title="${b.label}">${b.icon}</button>`).join('');
 
                 const winHtml = `
-                    <div id="${winId}" class="app-window" data-view-id="${viewId}" style="top:${60+(windowCount*25)}px; left:${60+(windowCount*25)}px">
+                    <div id="${winId}" class="app-window" data-view-id="${viewId}" style="top:${60+(windowCount*25)}px; left:${60+(windowCount*25)}px;z-index:100">
                         <div class="window-header"><span class="x-small fw-bold text-dark">${title}</span><div class="window-controls d-flex gap-1">${btnsHtml}</div></div>
                         <div class="window-body" id="body-${winId}"></div>
                     </div>
@@ -399,7 +408,7 @@
                 const tpl = document.getElementById(`tpl-${viewId}`);
                 if (tpl) $(`#body-${winId}`).append(tpl.content.cloneNode(true));
                 
-                $(`#${winId}`).draggable({ handle: ".window-header", containment: "parent", stack: ".app-window" }).resizable({ minWidth: 300, minHeight: 200 });
+                $(`#${winId}`).draggable({ handle: ".window-header", containment: "parent", stack: ".app-window" }).resizable({ minWidth: 100, minHeight: 200 });
 
                 if (viewId === 'database') {
                     this.selector.render(winId);
@@ -407,12 +416,13 @@
                 }
                 if (viewId === 'dashboard') this.updateStats(winId);
                 if (viewId === 'tasks') this.refreshTasks(winId);
+                select_window(winId)
                 this.updateWindowList();
             },
 
             winAction(action, winId) {
                 if (action === 'close') { 
-                    windowCount--;
+                   // windowCount--;
                     $(`#${winId}`).remove(); 
                     this.updateWindowList(); 
                 }
@@ -495,11 +505,12 @@
                 const list = $('#window-list').empty();
                 $('.app-window').each(function() { 
                     const title = $(this).find('.window-header span').text();
-                    list.append(`<button class="btn btn-sm btn-white border text-start x-small overflow-hidden" onclick="$('#${$(this).attr('id')}').trigger('mousedown')">${title}</button>`); 
+                    list.append(`<button class="btn btn-sm btn-white border text-start x-small overflow-hidden" onclick="select_window('${$(this).attr('id')}')">${title}</button>`); 
                 });
             }
+  
         };
-
+        
         const ui = {
             togglePanel(id) { $(`#${id}-panel`).toggleClass('collapsed'); },
             toggleTheme(init = false) {
@@ -511,6 +522,11 @@
         };
 
         $(document).ready(() => app.init());
+              function    select_window(id){
+                alert(id);
+                    document.getElementById(id).style.zIndex=zindex_count;
+                    zindex_count++;
+            }
     </script>
 </body>
 
