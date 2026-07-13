@@ -20,3 +20,7 @@ header {
   /* Use the environment variable for setting the height with a fallback. */
   height: env(titlebar-area-height, 33px);
 }
+#nav-dynamic-content > div:nth-child(2) {
+    position: absolute;
+    bottom: 0px;
+}
