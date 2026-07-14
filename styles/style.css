@@ -24,3 +24,18 @@ header {
     position: absolute;
     bottom: 0px;
 }
+
+body.dark-mode #header, body.dark-mode #footer {
+    background-color: black !important;
+    border-color: #1e293b !important;
+    color: #f1f5f9 !important;
+}
+
+#header {
+    height: 43px;
+    z-index: 1030;
+    padding: 0px ! important;
+    padding-left: 10px ! important;
+    padding-right: 10px ! important;
+    border-top: solid white ! important;
+}
