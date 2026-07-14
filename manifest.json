@@ -5,7 +5,7 @@
   "start_url": "./index.html",
   "display": "minimal-ui",
   "background_color": "white",
-  "theme_color": "black",
+  "theme_color": "#0c1322",
   "icons": [
     {
       "src": "/PWA/images/icon192.png",
