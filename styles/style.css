@@ -37,5 +37,5 @@ body.dark-mode #header, body.dark-mode #footer {
     padding: 0px ! important;
     padding-left: 10px ! important;
     padding-right: 10px ! important;
-    border-top: solid white ! important;
+   border-top: solid 0.5px white ! important;
 }

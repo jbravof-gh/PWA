@@ -190,9 +190,9 @@
     <style>
         :root { --sidebar-width: auto; --sidebar-collapsed-width: 70px; --aside-width: 280px; --transition-speed: 0.3s; }
         body { overflow: hidden; height: 100vh; display: flex; flex-direction: column; font-family: 'Segoe UI', sans-serif; transition: background-color var(--transition-speed); }
-        #header { height: 60px; z-index: 1030; }
+        #header {  z-index: 1030; }
         #footer { height: 40px; z-index: 1030; }
-        #wrapper { display: flex; flex: 1; overflow: hidden; position: relative; }
+        #wrapper { display: flex; flex: 1; overflow: hidden; position: relative; border-top: solid 0.5px #2c2c65;}
         
         #nav-panel { 
             width: var(--sidebar-width); 
@@ -258,7 +258,7 @@
            TEMA OSCURO PREMIUM (MÁXIMO CONTRASTE)
            ========================================== */
         body.dark-mode { 
-            background-color: #070a13; 
+            background-color: #0c1322; 
             color: #f1f5f9; 
         }
         
