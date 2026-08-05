@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-900 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador de Arquitectura y Código HTML</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Mermaid.js for flowcharts -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <!-- html2pdf.js for printable PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        code, pre { font-family: 'Fira Code', monospace; }
+        .mermaid { background: transparent !important; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
+        
+        /* Markdown formatting overrides */
+        .markdown-body h1 { font-size: 1.75rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #38bdf8; }
+        .markdown-body h2 { font-size: 1.35rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.5rem; color: #7dd3fc; border-bottom: 1px solid #334155; padding-bottom: 0.25rem; }
+        .markdown-body h3 { font-size: 1.1rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; color: #e2e8f0; }
+        .markdown-body p { margin-bottom: 0.75rem; line-height: 1.625; color: #cbd5e1; }
+        .markdown-body ul { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 0.75rem; color: #cbd5e1; }
+        .markdown-body ol { list-style-type: decimal; padding-left: 1.25rem; margin-bottom: 0.75rem; color: #cbd5e1; }
+        .markdown-body li { margin-bottom: 0.25rem; }
+        .markdown-body code { background-color: #1e293b; color: #38bdf8; padding: 0.15rem 0.4rem; border-radius: 0.25rem; font-size: 0.875em; }
+        .markdown-body pre { background-color: #0f172a; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 1rem; border: 1px solid #334155; }
+        .markdown-body pre code { background-color: transparent; padding: 0; color: #f8fafc; }
+        .markdown-body table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+        .markdown-body th, .markdown-body td { border: 1px solid #334155; padding: 0.5rem 0.75rem; text-align: left; }
+        .markdown-body th { background-color: #1e293b; font-weight: 600; color: #f1f5f9; }
+        .markdown-body blockquote { border-left: 4px solid #0284c7; padding-left: 1rem; color: #94a3b8; font-style: italic; margin-bottom: 1rem; }
+
+        /* Print Specific Styles */
+        @media print {
+            body {
+                background-color: #ffffff !important;
+                color: #0f172a !important;
+            }
+            header, #uploadSection, #loadingSection, button, .tab-btn, #toast {
+                display: none !important;
+            }
+            .tab-content {
+                display: block !important;
+                page-break-inside: avoid;
+            }
+            .markdown-body {
+                color: #1e293b !important;
+            }
+            .markdown-body h1, .markdown-body h2, .markdown-body h3 {
+                color: #0284c7 !important;
+            }
+            .markdown-body pre, .markdown-body code {
+                background-color: #f1f5f9 !important;
+                color: #0f172a !important;
+                border: 1px solid #cbd5e1 !important;
+            }
+            .bg-slate-900, .bg-slate-950, .bg-slate-800 {
+                background-color: #ffffff !important;
+                border-color: #e2e8f0 !important;
+                color: #0f172a !important;
+            }
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col bg-slate-950 text-slate-100 overflow-x-hidden">
+
+    <!-- Top Navigation Header -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/20">
+                    <i class="fa-solid fa-code-compare text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-indigo-300">
+                        HTML DocuAnalyzer Pro
+                    </h1>
+                    <p class="text-xs text-slate-400">Auditoría, Documentación y Mapeo de Flujos de Código HTML</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <button id="btnDemo" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
+                    <span>Cargar Ejemplo Demo</span>
+                </button>
+                <button id="btnNewAnalysis" class="hidden px-3 py-1.5 text-xs font-medium text-white bg-sky-600 hover:bg-sky-500 rounded-lg transition flex items-center gap-2 shadow-md shadow-sky-600/30">
+                    <i class="fa-solid fa-file-arrow-up"></i>
+                    <span>Analizar Otro Archivo</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col">
+
+        <!-- Dropzone / File Loader View -->
+        <section id="uploadSection" class="flex-1 flex flex-col justify-center items-center py-12">
+            <div class="w-full max-w-2xl text-center space-y-6">
+                <div class="space-y-2">
+                    <h2 class="text-3xl font-extrabold tracking-tight text-slate-100 sm:text-4xl">
+                        Documenta y analiza cualquier archivo HTML
+                    </h2>
+                    <p class="text-slate-400 text-sm sm:text-base">
+                        Sube tu archivo para generar un informe exhaustivo: análisis de estructura, solución técnica, ingeniería inversa funcional y diagramas de flujo interactivos.
+                    </p>
+                </div>
+
+                <!-- Dropzone Area -->
+                <div id="dropzone" class="relative group cursor-pointer border-2 border-dashed border-slate-700 hover:border-sky-500 bg-slate-900/50 hover:bg-slate-900/90 rounded-2xl p-8 sm:p-12 transition-all duration-300 shadow-xl flex flex-col items-center justify-center space-y-4">
+                    <input type="file" id="fileInput" accept=".html,.htm" class="hidden">
+                    
+                    <div class="w-20 h-20 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-sky-400 group-hover:scale-110 group-hover:bg-sky-500/10 transition-all duration-300 shadow-inner">
+                        <i class="fa-solid fa-cloud-arrow-up text-3xl"></i>
+                    </div>
+
+                    <div class="space-y-1 text-center">
+                        <p class="text-base font-semibold text-slate-200">
+                            Arrastra y suelta tu archivo HTML aquí
+                        </p>
+                        <p class="text-xs text-slate-400">
+                            o <span class="text-sky-400 font-medium underline">explora tus archivos locales</span> (.html, .htm)
+                        </p>
+                    </div>
+
+                    <div class="flex items-center gap-4 text-xs text-slate-500 pt-2">
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-check text-emerald-400"></i> Análisis de Scripts JS</span>
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-check text-emerald-400"></i> Métricas DOM</span>
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-check text-emerald-400"></i> Diagramas Mermaid</span>
+                    </div>
+                </div>
+
+                <!-- Quick info feature cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left pt-6">
+                    <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mb-2">
+                            <i class="fa-solid fa-layer-group"></i>
+                        </div>
+                        <h3 class="text-sm font-semibold text-slate-200">Análisis Elemental</h3>
+                        <p class="text-xs text-slate-400 mt-1">Conteo de etiquetas, validación semántica y estructura del DOM.</p>
+                    </div>
+                    <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
+                        <div class="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center mb-2">
+                            <i class="fa-solid fa-microchip"></i>
+                        </div>
+                        <h3 class="text-sm font-semibold text-slate-200">Arquitectura Técnica</h3>
+                        <p class="text-xs text-slate-400 mt-1">Librerías externas, estado, CSS, APIs y almacenamiento.</p>
+                    </div>
+                    <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mb-2">
+                            <i class="fa-solid fa-diagram-project"></i>
+                        </div>
+                        <h3 class="text-sm font-semibold text-slate-200">Flujo de Datos</h3>
+                        <p class="text-xs text-slate-400 mt-1">Generación automática de diagramas secuenciales y funcionales.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Loading & Processing Screen -->
+        <section id="loadingSection" class="hidden flex-1 flex flex-col items-center justify-center py-16">
+            <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl max-w-md w-full text-center space-y-6 shadow-2xl">
+                <div class="relative w-20 h-20 mx-auto">
+                    <div class="absolute inset-0 rounded-full border-4 border-slate-800"></div>
+                    <div class="absolute inset-0 rounded-full border-4 border-sky-500 border-t-transparent animate-spin"></div>
+                    <div class="absolute inset-0 flex items-center justify-center text-sky-400">
+                        <i class="fa-solid fa-brain text-2xl"></i>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 id="loadingStatusTitle" class="text-lg font-bold text-slate-100">Analizando Documento HTML...</h3>
+                    <p id="loadingStatusSub" class="text-xs text-slate-400 mt-1">Extrayendo árbol DOM, identificando funciones y scripts...</p>
+                </div>
+
+                <div class="space-y-2 text-left bg-slate-950 p-4 rounded-xl border border-slate-800/80 text-xs">
+                    <div id="step1" class="flex items-center justify-between text-slate-400">
+                        <span>1. Parsing del código fuente</span>
+                        <i class="fa-solid fa-circle-notch animate-spin text-sky-400"></i>
+                    </div>
+                    <div id="step2" class="flex items-center justify-between text-slate-500">
+                        <span>2. Inspección elemental & métricas</span>
+                        <i class="fa-regular fa-circle text-slate-600"></i>
+                    </div>
+                    <div id="step3" class="flex items-center justify-between text-slate-500">
+                        <span>3. Evaluación de arquitectura técnica</span>
+                        <i class="fa-regular fa-circle text-slate-600"></i>
+                    </div>
+                    <div id="step4" class="flex items-center justify-between text-slate-500">
+                        <span>4. Desglose de funciones y diagramación</span>
+                        <i class="fa-regular fa-circle text-slate-600"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analysis Results Dashboard Workspace -->
+        <section id="reportSection" class="hidden flex-1 flex flex-col space-y-6">
+
+            <!-- File Header Metadata Banner -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-lg">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center text-xl flex-shrink-0">
+                        <i class="fa-solid fa-file-code"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h2 id="fileNameText" class="text-lg font-bold text-slate-100">nombre_archivo.html</h2>
+                            <span id="fileBadgeSize" class="px-2.5 py-0.5 text-xs font-semibold bg-slate-800 text-sky-400 border border-slate-700 rounded-full">0 KB</span>
+                        </div>
+                        <p id="fileMetaSummary" class="text-xs text-slate-400 mt-0.5">0 líneas | 0 elementos DOM | 0 scripts JS</p>
+                    </div>
+                </div>
+
+                <!-- Export & Copy Actions -->
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button id="btnExportMd" class="px-3 py-2 text-xs font-medium bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-slate-200 transition flex items-center gap-2">
+                        <i class="fa-solid fa-download text-sky-400"></i>
+                        <span>Exportar Markdown</span>
+                    </button>
+                    <button id="btnPrintReport" class="px-3 py-2 text-xs font-medium bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-slate-200 transition flex items-center gap-2">
+                        <i class="fa-solid fa-print text-indigo-400"></i>
+                        <span>Imprimir / PDF</span>
+                    </button>
+                    <button id="btnCopyReport" class="px-3 py-2 text-xs font-medium bg-sky-600 hover:bg-sky-500 rounded-lg text-white font-medium transition flex items-center gap-2 shadow-md shadow-sky-600/30">
+                        <i class="fa-regular fa-copy"></i>
+                        <span>Copiar Informe</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs for Analysis Sections -->
+            <div class="border-b border-slate-800 flex space-x-1 sm:space-x-4 overflow-x-auto custom-scrollbar pb-1">
+                <button data-tab="tab-overview" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-lg transition flex items-center gap-2 text-sky-400 border-b-2 border-sky-400 bg-slate-900/40">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Resumen & Métricas</span>
+                </button>
+                <button data-tab="tab-elemental" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-lg transition flex items-center gap-2 text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-cube"></i>
+                    <span>Análisis Elemental</span>
+                </button>
+                <button data-tab="tab-technical" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-lg transition flex items-center gap-2 text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-microchip"></i>
+                    <span>Análisis Técnico</span>
+                </button>
+                <button data-tab="tab-functional" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-lg transition flex items-center gap-2 text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>Análisis Funcional</span>
+                </button>
+                <button data-tab="tab-flowchart" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-lg transition flex items-center gap-2 text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-diagram-project"></i>
+                    <span>Diagrama de Flujo</span>
+                </button>
+                <button data-tab="tab-code" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-lg transition flex items-center gap-2 text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-code"></i>
+                    <span>Código Fuente</span>
+                </button>
+            </div>
+
+            <!-- Tab Contents Container -->
+            <div class="flex-1 min-h-[500px]">
+
+                <!-- TAB 1: OVERVIEW & QUICK METRICS -->
+                <div id="tab-overview" class="tab-content space-y-6">
+                    <!-- Stat Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+                        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                            <span class="text-xs text-slate-400 block font-medium">Líneas de Código</span>
+                            <span id="statLines" class="text-2xl font-bold text-slate-100 mt-1 block">0</span>
+                        </div>
+                        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                            <span class="text-xs text-slate-400 block font-medium">Etiquetas DOM</span>
+                            <span id="statTags" class="text-2xl font-bold text-sky-400 mt-1 block">0</span>
+                        </div>
+                        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                            <span class="text-xs text-slate-400 block font-medium">Bloques de Script</span>
+                            <span id="statScripts" class="text-2xl font-bold text-amber-400 mt-1 block">0</span>
+                        </div>
+                        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                            <span class="text-xs text-slate-400 block font-medium">Funciones JS</span>
+                            <span id="statFuncs" class="text-2xl font-bold text-indigo-400 mt-1 block">0</span>
+                        </div>
+                        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                            <span class="text-xs text-slate-400 block font-medium">Estilos CSS</span>
+                            <span id="statStyles" class="text-2xl font-bold text-emerald-400 mt-1 block">0</span>
+                        </div>
+                        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                            <span class="text-xs text-slate-400 block font-medium">Inputs / Formularios</span>
+                            <span id="statForms" class="text-2xl font-bold text-rose-400 mt-1 block">0</span>
+                        </div>
+                    </div>
+
+                    <!-- AI Generated Executive Overview Card -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <h3 class="text-base font-bold text-slate-100 flex items-center gap-2">
+                                <i class="fa-solid fa-file-invoice text-sky-400"></i>
+                                Resumen Ejecutivo del Archivo
+                            </h3>
+                            <span class="text-xs bg-sky-500/10 text-sky-400 border border-sky-500/20 px-2.5 py-1 rounded-full font-medium">
+                                Generado por IA Gemini
+                            </span>
+                        </div>
+                        <div id="overviewMarkdown" class="markdown-body text-sm leading-relaxed text-slate-300">
+                            <!-- Populated dynamically -->
+                            <p class="text-slate-400 italic">Generando resumen del análisis...</p>
+                        </div>
+                    </div>
+
+                    <!-- HTML Structure Quick Breakdown -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+                            <h4 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                                <i class="fa-solid fa-tags text-indigo-400"></i>
+                                Top Etiquetas Utilizadas
+                            </h4>
+                            <div id="topTagsList" class="space-y-2">
+                                <!-- Dynamic List -->
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+                            <h4 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                                <i class="fa-solid fa-plug text-emerald-400"></i>
+                                Librerías y Scripts Externos Detectados
+                            </h4>
+                            <div id="externalDepsList" class="space-y-2">
+                                <!-- Dynamic List -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: ELEMENTAL ANALYSIS -->
+                <div id="tab-elemental" class="tab-content hidden space-y-6">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm">
+                        <div class="border-b border-slate-800 pb-3 mb-4">
+                            <h3 class="text-base font-bold text-slate-100 flex items-center gap-2">
+                                <i class="fa-solid fa-cubes text-sky-400"></i>
+                                Análisis Elemental del Código Fuente
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-1">
+                                Estructura sintáctica, estándares HTML5, anidamiento de elementos y composición CSS/JS inline vs externo.
+                            </p>
+                        </div>
+                        <div id="elementalMarkdown" class="markdown-body text-sm">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: TECHNICAL ANALYSIS -->
+                <div id="tab-technical" class="tab-content hidden space-y-6">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm">
+                        <div class="border-b border-slate-800 pb-3 mb-4">
+                            <h3 class="text-base font-bold text-slate-100 flex items-center gap-2">
+                                <i class="fa-solid fa-microchip text-indigo-400"></i>
+                                Análisis Técnico de la Solución Empleada
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-1">
+                                Arquitectura de software, gestión de estado, patrones de diseño, optimización, persistencia de datos y rendimiento.
+                            </p>
+                        </div>
+                        <div id="technicalMarkdown" class="markdown-body text-sm">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: DETAILED FUNCTIONAL ANALYSIS -->
+                <div id="tab-functional" class="tab-content hidden space-y-6">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm">
+                        <div class="border-b border-slate-800 pb-3 mb-4">
+                            <h3 class="text-base font-bold text-slate-100 flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-emerald-400"></i>
+                                Análisis Funcional Detallado de Funciones y Scripts
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-1">
+                                Especificación minuciosa de cada función JS, disparadores de eventos DOM, lógica de negocio y comportamiento dinámico.
+                            </p>
+                        </div>
+                        <div id="functionalMarkdown" class="markdown-body text-sm">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 5: FLOWCHART DIAGRAM -->
+                <div id="tab-flowchart" class="tab-content hidden space-y-6">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3 flex-wrap gap-2">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-100 flex items-center gap-2">
+                                    <i class="fa-solid fa-diagram-project text-amber-400"></i>
+                                    Diagrama de Flujo de Datos y Navegación
+                                </h3>
+                                <p class="text-xs text-slate-400 mt-1">
+                                    Representación visual del flujo de ejecución, estado y eventos a medida que el usuario navega o interactúa.
+                                </p>
+                            </div>
+                            <button id="btnRefreshMermaid" class="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-lg flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-arrows-rotate text-sky-400"></i>
+                                <span>Re-renderizar</span>
+                            </button>
+                        </div>
+
+                        <!-- Mermaid Container -->
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 overflow-x-auto custom-scrollbar flex justify-center items-center min-h-[350px]">
+                            <div id="mermaidTarget" class="mermaid w-full text-center">
+                                <!-- Mermaid SVG output here -->
+                            </div>
+                        </div>
+
+                        <!-- Raw Mermaid Code view -->
+                        <details class="bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs">
+                            <summary class="cursor-pointer text-slate-400 hover:text-slate-200 font-medium">Ver Código Fuente Mermaid (.mmd)</summary>
+                            <pre id="mermaidRawCode" class="mt-3 text-slate-300 overflow-x-auto p-3 bg-slate-900 rounded border border-slate-800 font-mono"></pre>
+                        </details>
+                    </div>
+                </div>
+
+                <!-- TAB 6: SOURCE CODE VIEWER -->
+                <div id="tab-code" class="tab-content hidden space-y-4">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-bold text-slate-200">Inspección de Código Fuente</h3>
+                            <button id="btnCopySource" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded transition flex items-center gap-1">
+                                <i class="fa-regular fa-copy"></i>
+                                <span>Copiar HTML</span>
+                            </button>
+                        </div>
+                        <pre class="bg-slate-950 border border-slate-800 rounded-xl p-4 max-h-[600px] overflow-auto text-xs font-mono text-slate-300 custom-scrollbar"><code id="sourceCodeBlock"></code></pre>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Notification Toast Modal -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-800 border border-slate-700 text-slate-100 px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 pointer-events-none">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toastMessage" class="text-xs font-medium">Notificación</span>
+    </div>
+
+    <script>
+        let currentFileContent = '';
+        let currentFileName = '';
+        let parsedDomInfo = null;
+        let aiAnalysisResult = null;
+
+        // Sample DEMO HTML Code for instant testing
+        const DEMO_HTML_CODE = `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Tareas Inteligente - Demo</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+</head>
+<body class="bg-slate-100 font-sans p-6">
+    <div class="max-w-md mx-auto bg-white rounded-xl shadow-md p-6">
+        <h1 class="text-xl font-bold text-slate-800 mb-4">Lista de Tareas</h1>
+        <form id="taskForm" class="flex gap-2 mb-4">
+            <input type="text" id="taskInput" placeholder="Nueva tarea..." required class="flex-1 border p-2 rounded-lg text-sm">
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium">Agregar</button>
+        </form>
+        <ul id="taskList" class="space-y-2 text-sm text-slate-700"></ul>
+        <div class="mt-4 pt-3 border-t text-xs text-slate-500 flex justify-between">
+            <span id="counter">0 tareas</span>
+            <button id="btnClear" class="text-red-500 hover:underline">Limpiar todo</button>
+        </div>
+    </div>
+    <script>
+        const tasks = [];
+        const taskForm = document.getElementById('taskForm');
+        const taskInput = document.getElementById('taskInput');
+        const taskList = document.getElementById('taskList');
+        const counter = document.getElementById('counter');
+        const btnClear = document.getElementById('btnClear');
+
+        function renderTasks() {
+            taskList.innerHTML = '';
+            tasks.forEach((task, index) => {
+                const li = document.createElement('li');
+                li.className = 'flex justify-between items-center p-2 bg-slate-50 rounded border';
+                li.innerHTML = \`<span>\${task.text}</span><button onclick="removeTask(\${index})" class="text-slate-400 hover:text-red-500">&times;</button>\`;
+                taskList.appendChild(li);
+            });
+            counter.textContent = \`\${tasks.length} tarea(s)\`;
+        }
+
+        function addTask(text) {
+            tasks.push({ text, completed: false, createdAt: new Date() });
+            renderTasks();
+        }
+
+        function removeTask(index) {
+            tasks.splice(index, 1);
+            renderTasks();
+        }
+
+        taskForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if(taskInput.value.trim()){
+                addTask(taskInput.value.trim());
+                taskInput.value = '';
+            }
+        });
+
+        btnClear.addEventListener('click', () => {
+            tasks.length = 0;
+            renderTasks();
+        });
+    <\/script>
+</body>
+</html>`;
+
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'dark',
+            securityLevel: 'loose',
+            fontFamily: 'Plus Jakarta Sans'
+        });
+
+        // DOM Element References
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const uploadSection = document.getElementById('uploadSection');
+        const loadingSection = document.getElementById('loadingSection');
+        const reportSection = document.getElementById('reportSection');
+        const btnDemo = document.getElementById('btnDemo');
+        const btnNewAnalysis = document.getElementById('btnNewAnalysis');
+
+        dropzone.addEventListener('click', () => fileInput.click());
+
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('border-sky-500', 'bg-slate-900');
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('border-sky-500', 'bg-slate-900');
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('border-sky-500', 'bg-slate-900');
+            if (e.dataTransfer.files.length > 0) {
+                handleFileSelect(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        btnDemo.addEventListener('click', () => {
+            processHTMLContent(DEMO_HTML_CODE, 'demo_app_tareas.html');
+        });
+
+        btnNewAnalysis.addEventListener('click', () => {
+            reportSection.classList.add('hidden');
+            btnNewAnalysis.classList.add('hidden');
+            uploadSection.classList.remove('hidden');
+            fileInput.value = '';
+        });
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('text-sky-400', 'border-b-2', 'border-sky-400', 'bg-slate-900/40');
+                    b.classList.add('text-slate-400');
+                });
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+
+                btn.classList.remove('text-slate-400');
+                btn.classList.add('text-sky-400', 'border-b-2', 'border-sky-400', 'bg-slate-900/40');
+
+                const targetTabId = btn.getAttribute('data-tab');
+                document.getElementById(targetTabId).classList.remove('hidden');
+
+                if (targetTabId === 'tab-flowchart') {
+                    renderMermaidDiagram();
+                }
+            });
+        });
+
+        function handleFileSelect(file) {
+            if (!file.name.endsWith('.html') && !file.name.endsWith('.htm')) {
+                showToast('Por favor selecciona un archivo con extensión .html o .htm', 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                processHTMLContent(e.target.result, file.name);
+            };
+            reader.onerror = () => {
+                showToast('Error al leer el archivo local', 'error');
+            };
+            reader.readAsText(file);
+        }
+
+        function analyzeDOMStructure(htmlContent) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, 'text/html');
+
+            const allElements = doc.querySelectorAll('*');
+            const scriptTags = doc.querySelectorAll('script');
+            const styleTags = doc.querySelectorAll('style, link[rel="stylesheet"]');
+            const formElements = doc.querySelectorAll('input, select, textarea, button, form');
+
+            // Count tags distribution
+            const tagCounts = {};
+            allElements.forEach(el => {
+                const tagName = el.tagName.toLowerCase();
+                tagCounts[tagName] = (tagCounts[tagName] || 0) + 1;
+            });
+
+            // Extract external JS links
+            const externalScripts = [];
+            scriptTags.forEach(s => {
+                if (s.src) externalScripts.push(s.src);
+            });
+
+            // Extract Inline scripts content
+            let inlineScriptCode = '';
+            let functionNames = [];
+            scriptTags.forEach(s => {
+                if (!s.src && s.textContent) {
+                    inlineScriptCode += s.textContent + '\n';
+                    // Basic Regex function extractor
+                    const fnMatches = s.textContent.match(/function\s+([a-zA-Z0-9_$]+)\s*\(/g);
+                    if (fnMatches) {
+                        fnMatches.forEach(m => {
+                            const name = m.replace(/function\s+/, '').replace('(', '').trim();
+                            if (!functionNames.includes(name)) functionNames.push(name);
+                        });
+                    }
+                    const constFnMatches = s.textContent.match(/(?:const|let|var)\s+([a-zA-Z0-9_$]+)\s*=\s*(?:\([^)]*\)|[a-zA-Z0-9_$]+)\s*=>/g);
+                    if (constFnMatches) {
+                        constFnMatches.forEach(m => {
+                            const name = m.split('=')[0].replace(/(?:const|let|var)\s+/, '').trim();
+                            if (!functionNames.includes(name)) functionNames.push(name);
+                        });
+                    }
+                }
+            });
+
+            const lines = htmlContent.split('\n').length;
+
+            return {
+                linesCount: lines,
+                totalTags: allElements.length,
+                scriptCount: scriptTags.length,
+                styleCount: styleTags.length,
+                formElementsCount: formElements.length,
+                tagCounts,
+                externalScripts,
+                inlineScriptCode,
+                functionNames
+            };
+        }
+
+        async function fetchAIAnalysis(htmlContent, fileInfo) {
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const systemPrompt = `Eres un Arquitecto Principal de Software, Auditor de Código Web y Especialista en Ingeniería Inversa. 
+Tu tarea es analizar el código HTML provisto (con sus estilos y scripts incorporados) y generar una documentación estructurada y profesional en idioma ESPAÑOL.
+
+Debes responder estrictamente en formato JSON válido con las siguientes claves:
+{
+  "resumenEjecutivo": "Markdown detallado con una visión general del propósito del archivo, qué problema resuelve y sus módulos clave.",
+  "analisisElemental": "Markdown exhaustivo con el análisis elemental del código: estructura de marcado HTML5, semántica, distribución de etiquetas, uso de clases CSS/inline, estándar de nombrado y salud sintáctica.",
+  "analisisTecnico": "Markdown técnico con la solución empleada: patrones arquitectónicos (MVC, Event-Driven, SPA Vanilla, etc.), librerías/frameworks identificados (Tailwind, Bootstrap, React, Three.js, etc.), gestión de estado, APIs consumidas, consumo de DOM, persistencia (localStorage/IndexedDB) y rendimiento.",
+  "analisisFuncional": "Markdown minucioso detallando TODAS y CADA UNA de las funciones JavaScript, listeners de eventos, callbacks y flujo funcional paso a paso desde que la página carga hasta las interacciones del usuario.",
+  "mermaidCode": "Código sintácticamente correcto de Mermaid.js (ejemplo: 'graph TD\\n  A[Inicio] --> B[Carga DOM]...') que represente el Diagrama de Flujo de Datos y Navegación según interactúa el usuario."
+}`;
+
+            const userPrompt = `Analiza detalladamente este archivo HTML de ${fileInfo.linesCount} líneas y ${fileInfo.totalTags} elementos DOM.
+Funciones detectadas localmente: ${fileInfo.functionNames.join(', ') || 'Ninguna identificada por regex'}.
+
+CÓDIGO FUENTE HTML A ANALIZAR:
+\`\`\`html
+${htmlContent.length > 50000 ? htmlContent.substring(0, 50000) + '\n<!-- ... Código truncado por longitud excesiva ... -->' : htmlContent}
+\`\`\``;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: userPrompt }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        generationConfig: {
+                            responseMimeType: "application/json"
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error en API HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                const jsonText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!jsonText) throw new Error("Respuesta vacía de la IA");
+
+                return JSON.parse(jsonText);
+            } catch (err) {
+                console.warn("Fallo en API IA Gemini, utilizando parser heurístico alternativo...", err);
+                return generateFallbackAnalysis(htmlContent, fileInfo);
+            }
+        }
+
+        function generateFallbackAnalysis(html, info) {
+            const funcList = info.functionNames.map(f => `- **\`${f}()\`**: Función JS detectada en los scripts del archivo.`).join('\n') || '- No se detectaron funciones JS declaradas explícitamente.';
+            const extList = info.externalScripts.map(s => `- \`${s}\``).join('\n') || '- No hay librerías externalizadas vía script src.';
+
+            return {
+                resumenEjecutivo: `### Resumen General\nEl documento cargado contiene **${info.linesCount} líneas** de código y un total de **${info.totalTags} elementos DOM**. Presenta **${info.scriptCount} bloques de script** y **${info.styleCount} recursos de hoja de estilo**.\n\nEste archivo constituye una página web o aplicación independiente en un único archivo.`,
+                analisisElemental: `### Estructura y Composición Sintáctica\n- **Conteo Total de Nodos DOM:** ${info.totalTags}\n- **Bloques JavaScript:** ${info.scriptCount}\n- **Hojas de Estilo:** ${info.styleCount}\n- **Formularios/Controles Interactivos:** ${info.formElementsCount}\n\n#### Distribución de Etiquetas Principales:\n${Object.entries(info.tagCounts).slice(0, 8).map(([t, c]) => `- \`<${t}>\`: ${c} ocurrencias`).join('\n')}`,
+                analisisTecnico: `### Arquitectura y Stack Tecnológico\n#### Librerías Externas Detectadas:\n${extList}\n\n#### Modelo de Ejecución:\nLa solución hace uso de JavaScript Vanilla integrado con manipulaciones directas del DOM y gestión de eventos de interfaz.`,
+                analisisFuncional: `### Desglose de Funciones y Lógica de Negocio\nSe han identificado las siguientes funciones en el código fuente:\n\n${funcList}`,
+                mermaidCode: `graph TD
+    A[Inicio: Carga HTML] --> B[Parsing de Hojas de Estilo]
+    B --> C[Parsing del DOM]
+    C --> D[Ejecución de Scripts Inline]
+    D --> E[Esperando Interacción del Usuario]`
+            };
+        }
+
+        async function processHTMLContent(htmlContent, fileName) {
+            currentFileContent = htmlContent;
+            currentFileName = fileName;
+
+            // Step 1: UI Loading transition
+            uploadSection.classList.add('hidden');
+            reportSection.classList.add('hidden');
+            loadingSection.classList.remove('hidden');
+
+            updateLoadingStep(1);
+
+            // Step 2: Local DOM parsing
+            setTimeout(async () => {
+                parsedDomInfo = analyzeDOMStructure(htmlContent);
+                updateLoadingStep(2);
+
+                // Step 3 & 4: AI Analysis
+                updateLoadingStep(3);
+                aiAnalysisResult = await fetchAIAnalysis(htmlContent, parsedDomInfo);
+                updateLoadingStep(4);
+
+                // Populate UI Dashboard
+                populateDashboard();
+
+                // Show Report UI
+                loadingSection.classList.add('hidden');
+                reportSection.classList.remove('hidden');
+                btnNewAnalysis.classList.remove('hidden');
+
+                showToast('¡Análisis generado con éxito!', 'success');
+            }, 600);
+        }
+
+        function updateLoadingStep(stepNum) {
+            for (let i = 1; i <= 4; i++) {
+                const el = document.getElementById(`step${i}`);
+                if (!el) continue;
+                if (i < stepNum) {
+                    el.className = 'flex items-center justify-between text-emerald-400 font-medium';
+                    el.querySelector('i').className = 'fa-solid fa-circle-check text-emerald-400';
+                } else if (i === stepNum) {
+                    el.className = 'flex items-center justify-between text-sky-400 font-medium';
+                    el.querySelector('i').className = 'fa-solid fa-circle-notch animate-spin text-sky-400';
+                } else {
+                    el.className = 'flex items-center justify-between text-slate-500';
+                    el.querySelector('i').className = 'fa-regular fa-circle text-slate-600';
+                }
+            }
+        }
+
+        function populateDashboard() {
+            // File Banner Meta
+            document.getElementById('fileNameText').textContent = currentFileName;
+            const fileSizeKb = (new Blob([currentFileContent]).size / 1024).toFixed(1);
+            document.getElementById('fileBadgeSize').textContent = `${fileSizeKb} KB`;
+            document.getElementById('fileMetaSummary').textContent = `${parsedDomInfo.linesCount} líneas | ${parsedDomInfo.totalTags} elementos DOM | ${parsedDomInfo.scriptCount} bloque(s) JS`;
+
+            // Stat Cards
+            document.getElementById('statLines').textContent = parsedDomInfo.linesCount;
+            document.getElementById('statTags').textContent = parsedDomInfo.totalTags;
+            document.getElementById('statScripts').textContent = parsedDomInfo.scriptCount;
+            document.getElementById('statFuncs').textContent = parsedDomInfo.functionNames.length;
+            document.getElementById('statStyles').textContent = parsedDomInfo.styleCount;
+            document.getElementById('statForms').textContent = parsedDomInfo.formElementsCount;
+
+            // Overview Markdown
+            document.getElementById('overviewMarkdown').innerHTML = marked.parse(aiAnalysisResult.resumenEjecutivo || '');
+
+            // Top Tags Breakdown List
+            const topTagsContainer = document.getElementById('topTagsList');
+            topTagsContainer.innerHTML = '';
+            const sortedTags = Object.entries(parsedDomInfo.tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            sortedTags.forEach(([tag, count]) => {
+                const percent = Math.round((count / parsedDomInfo.totalTags) * 100);
+                const item = document.createElement('div');
+                item.className = 'space-y-1';
+                item.innerHTML = `
+                    <div class="flex justify-between text-xs">
+                        <span class="font-mono text-slate-300 font-semibold">&lt;${tag}&gt;</span>
+                        <span class="text-slate-400">${count} (${percent}%)</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-indigo-500 h-full rounded-full" style="width: ${percent}%"></div>
+                    </div>
+                `;
+                topTagsContainer.appendChild(item);
+            });
+
+            // External Libraries / Scripts
+            const extContainer = document.getElementById('externalDepsList');
+            extContainer.innerHTML = '';
+            if (parsedDomInfo.externalScripts.length === 0) {
+                extContainer.innerHTML = `<p class="text-xs text-slate-500 italic">No se detectaron scripts o CDN externas.</p>`;
+            } else {
+                parsedDomInfo.externalScripts.forEach(url => {
+                    const item = document.createElement('div');
+                    item.className = 'p-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-sky-400 truncate flex items-center gap-2';
+                    item.innerHTML = `<i class="fa-solid fa-link text-slate-500 text-[10px]"></i><span title="${url}">${url}</span>`;
+                    extContainer.appendChild(item);
+                });
+            }
+
+            // Tab Markdowns
+            document.getElementById('elementalMarkdown').innerHTML = marked.parse(aiAnalysisResult.analisisElemental || '');
+            document.getElementById('technicalMarkdown').innerHTML = marked.parse(aiAnalysisResult.analisisTecnico || '');
+            document.getElementById('functionalMarkdown').innerHTML = marked.parse(aiAnalysisResult.analisisFuncional || '');
+
+            // Source Code View
+            const codeBlock = document.getElementById('sourceCodeBlock');
+            codeBlock.textContent = currentFileContent;
+
+            // Prepare Mermaid Diagram Code
+            const rawMermaid = aiAnalysisResult.mermaidCode || `graph TD\n  A[Carga de HTML] --> B[Renderizado DOM]`;
+            document.getElementById('mermaidRawCode').textContent = rawMermaid;
+        }
+
+        async function renderMermaidDiagram() {
+            const target = document.getElementById('mermaidTarget');
+            const rawCode = aiAnalysisResult?.mermaidCode || `graph TD\n  A[Carga de HTML] --> B[Renderizado DOM]`;
+
+            try {
+                target.innerHTML = '';
+                const id = 'mermaid-svg-' + Date.now();
+                const { svg } = await mermaid.render(id, rawCode);
+                target.innerHTML = svg;
+            } catch (err) {
+                console.warn("Fallo al renderizar diagrama Mermaid:", err);
+                target.innerHTML = `
+                    <div class="text-amber-400 text-xs p-4 border border-amber-500/20 bg-amber-500/5 rounded-xl space-y-2">
+                        <p class="font-bold"><i class="fa-solid fa-triangle-exclamation"></i> No se pudo renderizar el gráfico interactivo.</p>
+                        <p class="text-slate-400 font-mono text-[11px]">${err.message || err}</p>
+                    </div>
+                `;
+            }
+        }
+
+        document.getElementById('btnRefreshMermaid')?.addEventListener('click', renderMermaidDiagram);
+
+        document.getElementById('btnCopySource').addEventListener('click', () => {
+            copyToClipboard(currentFileContent, 'Código fuente copiado al portapapeles');
+        });
+
+        document.getElementById('btnCopyReport').addEventListener('click', () => {
+            const fullReportText = `# Informe Técnico de Auditoría HTML: ${currentFileName}
+## 1. Resumen Ejecutivo
+${aiAnalysisResult?.resumenEjecutivo}
+
+## 2. Análisis Elemental
+${aiAnalysisResult?.analisisElemental}
+
+## 3. Análisis Técnico
+${aiAnalysisResult?.analisisTecnico}
+
+## 4. Análisis Funcional
+${aiAnalysisResult?.analisisFuncional}
+
+## 5. Código de Diagrama de Flujo (Mermaid)
+\`\`\`mermaid
+${aiAnalysisResult?.mermaidCode}
+\`\`\`
+`;
+            copyToClipboard(fullReportText, 'Informe completo copiado en formato Markdown');
+        });
+
+        document.getElementById('btnExportMd').addEventListener('click', () => {
+            const fullReportText = `# Informe Técnico de Auditoría HTML: ${currentFileName}
+## 1. Resumen Ejecutivo
+${aiAnalysisResult?.resumenEjecutivo}
+
+## 2. Análisis Elemental
+${aiAnalysisResult?.analisisElemental}
+
+## 3. Análisis Técnico
+${aiAnalysisResult?.analisisTecnico}
+
+## 4. Análisis Funcional
+${aiAnalysisResult?.analisisFuncional}
+
+## 5. Diagrama de Flujo (Mermaid)
+\`\`\`mermaid
+${aiAnalysisResult?.mermaidCode}
+\`\`\`
+`;
+            const blob = new Blob([fullReportText], { type: 'text/markdown;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Informe_Analisis_${currentFileName.replace(/\.[^/.]+$/, "")}.md`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Archivo Markdown descargado', 'success');
+        });
+
+        document.getElementById('btnPrintReport').addEventListener('click', () => {
+            generatePDFReport();
+        });
+
+        async function generatePDFReport() {
+            showToast('Generando documento PDF...', 'info');
+            
+            // Create a clean HTML wrapper containing all sections for the PDF generator
+            const exportContainer = document.createElement('div');
+            exportContainer.className = 'p-6 bg-white text-slate-900 font-sans space-y-6';
+            exportContainer.style.width = '750px';
+
+            const cleanTitle = currentFileName ? currentFileName.replace(/\.[^/.]+$/, "") : "Informe";
+
+            exportContainer.innerHTML = `
+                <div style="border-bottom: 2px solid #0284c7; padding-bottom: 12px; margin-bottom: 20px;">
+                    <h1 style="font-size: 22px; font-weight: bold; color: #0284c7; margin: 0;">Informe Técnico de Auditoría HTML</h1>
+                    <p style="font-size: 12px; color: #64748b; margin-top: 4px;">Archivo: <strong>${currentFileName}</strong> | Generado el ${new Date().toLocaleDateString('es-ES')}</p>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <h2 style="font-size: 16px; font-weight: bold; color: #0369a1; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">1. Resumen Ejecutivo</h2>
+                    <div style="font-size: 12px; color: #334155; margin-top: 8px;" class="markdown-body">${document.getElementById('overviewMarkdown').innerHTML}</div>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <h2 style="font-size: 16px; font-weight: bold; color: #0369a1; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">2. Análisis Elemental</h2>
+                    <div style="font-size: 12px; color: #334155; margin-top: 8px;" class="markdown-body">${document.getElementById('elementalMarkdown').innerHTML}</div>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <h2 style="font-size: 16px; font-weight: bold; color: #0369a1; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">3. Análisis Técnico</h2>
+                    <div style="font-size: 12px; color: #334155; margin-top: 8px;" class="markdown-body">${document.getElementById('technicalMarkdown').innerHTML}</div>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <h2 style="font-size: 16px; font-weight: bold; color: #0369a1; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">4. Análisis Funcional</h2>
+                    <div style="font-size: 12px; color: #334155; margin-top: 8px;" class="markdown-body">${document.getElementById('functionalMarkdown').innerHTML}</div>
+                </div>
+            `;
+
+            const opt = {
+                margin:       [10, 10, 10, 10],
+                filename:     `Informe_Analisis_${cleanTitle}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            try {
+                if (typeof html2pdf !== 'undefined') {
+                    await html2pdf().set(opt).from(exportContainer).save();
+                    showToast('PDF generado y descargado correctamente', 'success');
+                } else {
+                    triggerNativePrint();
+                }
+            } catch (err) {
+                console.warn("Fallo al generar PDF con html2pdf, recurriendo a impresión del navegador:", err);
+                triggerNativePrint();
+            }
+        }
+
+        function triggerNativePrint() {
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(t => t.classList.remove('hidden'));
+            
+            try {
+                window.print();
+            } catch(e) {
+                showToast('No se pudo abrir el diálogo de impresión', 'error');
+            }
+
+            const activeTabBtn = document.querySelector('.tab-btn.text-sky-400');
+            if (activeTabBtn) {
+                const activeTabId = activeTabBtn.getAttribute('data-tab');
+                tabs.forEach(t => {
+                    if (t.id !== activeTabId) t.classList.add('hidden');
+                });
+            }
+        }
+
+        function copyToClipboard(text, successMsg) {
+            const tempArea = document.createElement('textarea');
+            tempArea.value = text;
+            document.body.appendChild(tempArea);
+            tempArea.select();
+            try {
+                document.execCommand('copy');
+                showToast(successMsg, 'success');
+            } catch (err) {
+                showToast('No se pudo copiar el texto', 'error');
+            }
+            document.body.removeChild(tempArea);
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMessage.textContent = message;
+            if (type === 'error') {
+                toastIcon.className = 'fa-solid fa-circle-xmark text-rose-400 text-lg';
+            } else {
+                toastIcon.className = 'fa-solid fa-circle-check text-emerald-400 text-lg';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
